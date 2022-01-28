@@ -17,5 +17,5 @@ BaselineOfRBFormatter >> baseline: spec [
 
 { #category : #baselines }
 BaselineOfRBFormatter >> setDefaultFormatter [
-	self class environment at: #RBFormatter ifPresent: [ :class | RBProgramNode formatterClass: class ]
+	self class environment at: #RBConfigurableFormatter ifPresent: [ :class | RBProgramNode formatterClass: class ]
 ]
