@@ -23,6 +23,7 @@ Class {
 		'NewLinesAfterMethodPattern',
 		'NewLinesAfterTemporaries',
 		'NumberOfArgumentsForMultiLine',
+		'ParenthesizeCascadeReceiver',
 		'PeriodsAsTerminators',
 		'RetainBlankLinesBetweenStatements',
 		'StringFollowingReturn',
@@ -103,7 +104,8 @@ RBConfigurableFormatter class >> initialize [
 	StringInsideBlocks := ' '.
 	StringInsideParentheses := ''.
 	TraditionalBinaryPrecedence := #(#($| $& $?) #($= $~ $< $>) #($- $+) #($* $/ $% $\) #($@)).
-	UseTraditionalBinaryPrecedenceForParentheses := true
+	UseTraditionalBinaryPrecedenceForParentheses := true.
+	ParenthesizeCascadeReceiver := true
 ]
 
 { #category : #settings }
@@ -214,6 +216,16 @@ RBConfigurableFormatter class >> numberOfArgumentsForMultiLine [
 { #category : #settings }
 RBConfigurableFormatter class >> numberOfArgumentsForMultiLine: anInteger [
 	NumberOfArgumentsForMultiLine := anInteger
+]
+
+{ #category : #settings }
+RBConfigurableFormatter class >> parenthesizeCascadeReceiver [
+	^ ParenthesizeCascadeReceiver
+]
+
+{ #category : #settings }
+RBConfigurableFormatter class >> parenthesizeCascadeReceiver: aBoolean [
+	ParenthesizeCascadeReceiver := aBoolean
 ]
 
 { #category : #settings }
@@ -571,7 +583,9 @@ RBConfigurableFormatter >> needsParenthesisFor: aNode [
 	| parent grandparent |
 	parent := aNode parent.
 	(parent isNil or: [ parent isMessage not ]) ifTrue: [ ^ false ].
-	(aNode isMessage and: [ parent isMessage and: [ parent receiver == aNode ] ])
+	(aNode isMessage
+		and:
+			[ (ParenthesizeCascadeReceiver or: [ aNode isUnary not ]) and: [ parent isMessage and: [ parent receiver == aNode ] ] ])
 		ifTrue:
 			[ grandparent := parent parent.
 			(grandparent notNil and: [ grandparent isCascade ]) ifTrue: [ ^ true ] ].
