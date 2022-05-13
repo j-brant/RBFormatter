@@ -37,14 +37,26 @@ Class {
 
 { #category : #'public interface' }
 RBConfigurableFormatter class >> format: aParseTree [
-	^ self format: aParseTree withIndents: 0
+	^ self
+		format: aParseTree
+		withIndents: 0
+		includeStatementComments: true
 ]
 
-{ #category : #'public interface' }
+{ #category : #private }
 RBConfigurableFormatter class >> format: aParseTree withIndents: anInteger [
-	^ (self new)
-		indent: anInteger;
+	^ self
 		format: aParseTree
+		withIndents: anInteger
+		includeStatementComments: false
+]
+
+{ #category : #private }
+RBConfigurableFormatter class >> format: aParseTree withIndents: anInteger includeStatementComments: aBoolean [
+	| formatter |
+	formatter := self new.
+	formatter indent: anInteger.
+	^ formatter format: aParseTree includeStatementComments: aBoolean
 ]
 
 { #category : #settings }
@@ -298,6 +310,34 @@ RBConfigurableFormatter class >> useTraditionalBinaryPrecedenceForParentheses: a
 	UseTraditionalBinaryPrecedenceForParentheses := aBoolean
 ]
 
+{ #category : #examples }
+RBConfigurableFormatter class >> verifyFormatter [
+	"Runs the formatter on the image to check for any problems where the code or comments no longer match after formatting."
+
+	"
+		self verifyFormatter
+	"
+
+	| block codeDifferences commentDifferences |
+	codeDifferences := OrderedCollection new.
+	commentDifferences := OrderedCollection new.
+	block := [ :m | 
+		| ast formatted |
+		ast := m ast.
+		formatted := RBParser parseMethod: (self format: ast).
+		ast ~= formatted
+			ifTrue: [ codeDifferences add: ast ]
+			ifFalse:
+				[ ast allComments asIdentitySet size ~= formatted allComments asIdentitySet size ifTrue: [ commentDifferences add: ast ] ] ].
+	Smalltalk
+		allClassesDo:
+			[ :each | 
+			each methodsDo: [ :method | block value: method ].
+			each class methodsDo: [ :method | block value: method ] ].
+	self assert: codeDifferences isEmpty.
+	self assert: commentDifferences isEmpty
+]
+
 { #category : #'private-formatting' }
 RBConfigurableFormatter >> addNewLinesBeforeStatementStartingAt: anInteger [
 	| newLines |
@@ -336,8 +376,15 @@ RBConfigurableFormatter >> currentLineLength [
 
 { #category : #'public interface' }
 RBConfigurableFormatter >> format: aParseTree [
+	^ self format: aParseTree includeStatementComments: true
+]
+
+{ #category : #'public interface' }
+RBConfigurableFormatter >> format: aParseTree includeStatementComments: aBoolean [
 	originalSource := aParseTree source.
 	self visitNode: aParseTree.
+	(aBoolean and: [ FormatCommentWithStatements and: [ aParseTree isValue ] ])
+		ifTrue: [ self formatStatementCommentsFor: aParseTree ].
 	^ codeStream contents
 ]
 
@@ -346,6 +393,7 @@ RBConfigurableFormatter >> formatBlock: aBlockNode [
 	(LineUpBlockBrackets and: [ self willBeMultiline: aBlockNode body ])
 		ifTrue: [ self newLine ]
 		ifFalse: [ codeStream nextPutAll: StringInsideBlocks ].
+	FormatCommentWithStatements ifTrue: [ self formatCommentsFor: aBlockNode ].
 	self formatBlockArgumentsFor: aBlockNode.
 	self visitNode: aBlockNode body.
 	^ (LineUpBlockBrackets and: [ self willBeMultiline: aBlockNode body ])
@@ -487,7 +535,7 @@ RBConfigurableFormatter >> formatSequenceNodeStatementsFor: aSequenceNode [
 RBConfigurableFormatter >> formatStatementCommentsFor: aStatementNode [
 	originalSource isNil ifTrue: [ ^ self ].
 	FormatCommentWithStatements ifFalse: [ ^ self ].
-	aStatementNode statementComments
+	aStatementNode formatterStatementComments
 		do:
 			[ :each | 
 			codeStream
@@ -666,9 +714,11 @@ RBConfigurableFormatter >> visitArrayNode: anArrayNode [
 
 { #category : #'visitor-double dispatching' }
 RBConfigurableFormatter >> visitAssignmentNode: anAssignmentNode [
-	self visitNode: anAssignmentNode variable.
-	codeStream nextPutAll: ' := '.
-	self visitNode: anAssignmentNode value
+	self
+		indentAround:
+			[ self visitNode: anAssignmentNode variable.
+			codeStream nextPutAll: ' := '.
+			self visitNode: anAssignmentNode value ]
 ]
 
 { #category : #'visitor-double dispatching' }
@@ -690,7 +740,8 @@ RBConfigurableFormatter >> visitCascadeNode: aCascadeNode [
 							[ self
 								formatSelectorAndArguments: each
 								firstSeparator: [  ]
-								restSeparator: ((self isMultiLineMessage: each) ifTrue: [ [ self newLine ] ] ifFalse: [ [ self space ] ]) ] ]
+								restSeparator: ((self isMultiLineMessage: each) ifTrue: [ [ self newLine ] ] ifFalse: [ [ self space ] ]) ].
+					FormatCommentWithStatements not ifTrue: [ self formatCommentsFor: each ] ]
 				separatedBy:
 					[ codeStream nextPut: $;.
 					NewLineAfterCascade ifTrue: [ self newLine ] ifFalse: [ self space ] ] ]
