@@ -660,6 +660,7 @@ RBConfigurableFormatter >> newLines: anInteger [
 { #category : #private }
 RBConfigurableFormatter >> newLinesBeforeStartingAt: anIndex [
 	| count cr lf index char |
+	originalSource ifNil: [ ^ 0 ].
 	(anIndex isNil or: [ anIndex > originalSource size ]) ifTrue: [ ^ 0 ].
 	cr := Character value: 13.
 	lf := Character value: 10.
