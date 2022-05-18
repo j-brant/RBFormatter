@@ -26,6 +26,7 @@ Class {
 		'ParenthesizeCascadeReceiver',
 		'PeriodsAsTerminators',
 		'RetainBlankLinesBetweenStatements',
+		'SameLineKeywordArgument',
 		'StringFollowingReturn',
 		'StringInsideBlocks',
 		'StringInsideParentheses',
@@ -112,6 +113,7 @@ RBConfigurableFormatter class >> initialize [
 	NumberOfArgumentsForMultiLine := 3.
 	PeriodsAsTerminators := false.
 	RetainBlankLinesBetweenStatements := false.
+	SameLineKeywordArgument := false.
 	StringFollowingReturn := ' '.
 	StringInsideBlocks := ' '.
 	StringInsideParentheses := ''.
@@ -258,6 +260,16 @@ RBConfigurableFormatter class >> retainBlankLinesBetweenStatements [
 { #category : #settings }
 RBConfigurableFormatter class >> retainBlankLinesBetweenStatements: aBoolean [
 	RetainBlankLinesBetweenStatements := aBoolean
+]
+
+{ #category : #settings }
+RBConfigurableFormatter class >> sameLineKeywordArgument [
+	^SameLineKeywordArgument
+]
+
+{ #category : #settings }
+RBConfigurableFormatter class >> sameLineKeywordArgument: aBoolean [
+	SameLineKeywordArgument := aBoolean
 ]
 
 { #category : #settings }
@@ -497,7 +509,8 @@ RBConfigurableFormatter >> formatSelectorAndArguments: aMessageNode firstSeparat
 					self
 						indentAround:
 							[ codeStream nextPutAll: selector value.
-							((self willBeMultiline: argument) or: [ self isLineTooLong: (self formattedSourceFor: argument) ])
+							(SameLineKeywordArgument not
+								and: [ (self willBeMultiline: argument) or: [ self isLineTooLong: (self formattedSourceFor: argument) ] ])
 								ifTrue: [ self newLine ]
 								ifFalse: [ self space ].
 							self visitNode: argument ] ] ]
@@ -575,6 +588,11 @@ RBConfigurableFormatter >> formattedSourceFor: aNode [
 	^ lookaheadCode at: aNode ifAbsentPut: [ self class format: aNode withIndents: indent ]
 ]
 
+{ #category : #private }
+RBConfigurableFormatter >> indent [
+	indent timesRepeat: [ codeStream nextPutAll: IndentString ]
+]
+
 { #category : #'initialize-release' }
 RBConfigurableFormatter >> indent: anInteger [
 	indent := anInteger
@@ -607,9 +625,11 @@ RBConfigurableFormatter >> isLineTooLong: aString [
 
 { #category : #'private-formatting' }
 RBConfigurableFormatter >> isMultiLineMessage: aMessageNode [
-	| messageStream |
+	| messageStream indentDelta |
 	aMessageNode arguments size >= NumberOfArgumentsForMultiLine ifTrue: [ ^ true ].
-	(aMessageNode arguments anySatisfy: [ :each | self indent: IndentsForKeywords + 1 around: [ self willBeMultiline: each ] ])
+	indentDelta := aMessageNode parent isCascade ifTrue: [ 0 ] ifFalse: [ 1 ].
+	(aMessageNode arguments
+		anySatisfy: [ :each | self indent: IndentsForKeywords + indentDelta around: [ self willBeMultiline: each ] ])
 		ifTrue: [ ^ true ].
 	aMessageNode isUnary ifTrue: [ ^ self isLineTooLong: aMessageNode selector ].
 	messageStream := WriteStream on: (String new: 100).
@@ -654,7 +674,7 @@ RBConfigurableFormatter >> newLines: anInteger [
 	anInteger + IndentString size = 0 ifTrue: [ codeStream space ].
 	anInteger timesRepeat: [ codeStream cr ].
 	lineStart := codeStream position.
-	indent timesRepeat: [ codeStream nextPutAll: IndentString ]
+	self indent
 ]
 
 { #category : #private }
@@ -733,11 +753,15 @@ RBConfigurableFormatter >> visitCascadeNode: aCascadeNode [
 	self
 		indentAround:
 			[ NewLineBeforeFirstCascade ifTrue: [ self newLine ] ifFalse: [ self space ].
+
 			aCascadeNode messages
 				do:
 					[ :each | 
+					| keywordIndent |
+					keywordIndent := each selector keywords size = 1 ifTrue: [ 0 ] ifFalse: [ 1 ].
 					self
-						indentAround:
+						indent: keywordIndent
+						around:
 							[ self
 								formatSelectorAndArguments: each
 								firstSeparator: [  ]
