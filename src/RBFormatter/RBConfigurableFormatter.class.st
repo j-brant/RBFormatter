@@ -10,6 +10,7 @@ Class {
 	],
 	#classVars : [
 		'FormatCommentWithStatements',
+		'IndentCompression',
 		'IndentString',
 		'IndentsForKeywords',
 		'LineUpBlockBrackets',
@@ -76,6 +77,18 @@ RBConfigurableFormatter class >> formatCommentWithStatements: aBoolean [
 	FormatCommentWithStatements := aBoolean
 ]
 
+{ #category : #accessing }
+RBConfigurableFormatter class >> indentCompression [
+
+	^ IndentCompression
+]
+
+{ #category : #accessing }
+RBConfigurableFormatter class >> indentCompression: anObject [
+
+	IndentCompression := anObject
+]
+
 { #category : #settings }
 RBConfigurableFormatter class >> indentString [
 	^ IndentString
@@ -99,6 +112,7 @@ RBConfigurableFormatter class >> indentsForKeywords: anInteger [
 { #category : #'class initialization' }
 RBConfigurableFormatter class >> initialize [
 	FormatCommentWithStatements := true.
+	IndentCompression := false.
 	IndentsForKeywords := 1.
 	IndentString := String with: Character tab.
 	LineUpBlockBrackets := false.
@@ -172,6 +186,18 @@ RBConfigurableFormatter class >> newLineAfterCascade [
 { #category : #settings }
 RBConfigurableFormatter class >> newLineAfterCascade: aBoolean [
 	NewLineAfterCascade := aBoolean
+]
+
+{ #category : #accessing }
+RBConfigurableFormatter class >> newLineAfterPragma [
+
+	^ NewLineAfterPragma
+]
+
+{ #category : #accessing }
+RBConfigurableFormatter class >> newLineAfterPragma: anObject [
+
+	NewLineAfterPragma := anObject
 ]
 
 { #category : #settings }
