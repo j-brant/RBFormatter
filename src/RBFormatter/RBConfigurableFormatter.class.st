@@ -17,6 +17,7 @@ Class {
 		'MethodSignatureOnMultipleLines',
 		'MinimumNewLinesBetweenStatements',
 		'NewLineAfterCascade',
+		'NewLineAfterPragma',
 		'NewLineBeforeFirstCascade',
 		'NewLineBeforeFirstKeyword',
 		'NewLinesAfterMethodComment',
@@ -107,6 +108,7 @@ RBConfigurableFormatter class >> initialize [
 	NewLineAfterCascade := true.
 	NewLineBeforeFirstCascade := true.
 	NewLineBeforeFirstKeyword := true.
+	NewLineAfterPragma := true.
 	NewLinesAfterMethodComment := 2.
 	NewLinesAfterMethodPattern := 1.
 	NewLinesAfterTemporaries := 1.
@@ -564,7 +566,7 @@ RBConfigurableFormatter >> formatTagsFor: aMethodNode [
 		do:
 			[ :each | 
 			self visitNode: each.
-			self newLine ]
+			NewLineAfterPragma ifTrue: [ self newLine ] ]
 ]
 
 { #category : #'private-formatting' }
