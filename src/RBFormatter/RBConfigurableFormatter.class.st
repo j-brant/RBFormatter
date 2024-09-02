@@ -812,7 +812,10 @@ RBConfigurableFormatter >> visitLiteralArrayNode: aRBArrayLiteralNode [
 
 { #category : #'visitor-double dispatching' }
 RBConfigurableFormatter >> visitLiteralNode: aLiteralNode [
-	self writeString: aLiteralNode sourceText
+	self
+		writeString: (aLiteralNode value isLiteral
+				ifTrue: [ aLiteralNode sourceText ]
+				ifFalse: [ '''<an unprintable nonliteral value>''' ])
 ]
 
 { #category : #'visitor-double dispatching' }
