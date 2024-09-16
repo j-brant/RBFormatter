@@ -351,6 +351,31 @@ RBConfigurableFormatter class >> useTraditionalBinaryPrecedenceForParentheses: a
 ]
 
 { #category : #examples }
+RBConfigurableFormatter class >> verifyEmbeddedCommentsFormatter [
+	<gtExample>
+	| results invalid |
+	results := Object selectors
+			collect: [ :each | 
+				| source newSource ast newAst formattedAst |
+				source := Object sourceCodeAt: each.
+				newSource := SmaCCString on: (Object sourceCodeAt: each).
+				ast := RBParser parseMethod: source.
+				ast
+					nodesDo: [ :node | 
+						newSource insert: '"a""b"' at: node start.
+						newSource insert: '"c""d"' at: node stop + 1 ].
+				newAst := RBParser parseMethod: newSource asString.
+				formattedAst := RBParser parseMethod: (self format: newAst).
+				{ast.
+					newAst.
+					formattedAst} ].
+	invalid := results
+			reject: [ :each | each first = each last and: [ each second = each last ] ].
+	self assert: invalid isEmpty.
+	^ results
+]
+
+{ #category : #examples }
 RBConfigurableFormatter class >> verifyFormatter [
 	"Runs the formatter on the image to check for any problems where the code or comments no longer match after formatting."
 
@@ -456,15 +481,19 @@ RBConfigurableFormatter >> formatBlockArgumentsFor: aBlockNode [
 ]
 
 { #category : #'private-formatting' }
+RBConfigurableFormatter >> formatComment: each [
+	codeStream
+		nextPut: $";
+		nextPutAll: (each contents copyReplaceAll: '"' with: '""');
+		nextPut: $"
+]
+
+{ #category : #'private-formatting' }
 RBConfigurableFormatter >> formatCommentsFor: aNode [
 	aNode comments
-		do:
-			[ :each | 
-			codeStream
-				space;
-				nextPut: $";
-				nextPutAll: each contents;
-				nextPut: $" ]
+		do: [ :each | 
+			codeStream space.
+			self formatComment: each ]
 ]
 
 { #category : #'private-formatting' }
@@ -480,12 +509,8 @@ RBConfigurableFormatter >> formatMethodBodyFor: aMethodNode [
 { #category : #'private-formatting' }
 RBConfigurableFormatter >> formatMethodCommentFor: aMethodNode [
 	(self commentsForMethod: aMethodNode)
-		do:
-			[ :each | 
-			codeStream
-				nextPut: $";
-				nextPutAll: each contents;
-				nextPut: $".
+		do: [ :each | 
+			self formatComment: each.
 			self newLines: NewLinesAfterMethodComment ]
 ]
 
@@ -548,12 +573,8 @@ RBConfigurableFormatter >> formatSelectorAndArguments: aMessageNode firstSeparat
 RBConfigurableFormatter >> formatSequenceCommentsFor: aSequenceNode [
 	originalSource isNil ifTrue: [ ^ self ].
 	aSequenceNode comments
-		do:
-			[ :each | 
-			codeStream
-				nextPut: $";
-				nextPutAll: each contents;
-				nextPut: $".
+		do: [ :each | 
+			self formatComment: each.
 			self newLine ]
 ]
 
@@ -577,13 +598,9 @@ RBConfigurableFormatter >> formatStatementCommentsFor: aStatementNode [
 	originalSource isNil ifTrue: [ ^ self ].
 	FormatCommentWithStatements ifFalse: [ ^ self ].
 	aStatementNode formatterStatementComments
-		do:
-			[ :each | 
-			codeStream
-				tab;
-				nextPut: $";
-				nextPutAll: each contents;
-				nextPut: $" ]
+		do: [ :each | 
+			codeStream tab.
+			self formatComment: each ]
 ]
 
 { #category : #'private-formatting' }
