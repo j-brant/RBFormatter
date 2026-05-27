@@ -1,6 +1,6 @@
-Extension { #name : #RBProgramNode }
+Extension { #name : 'RBProgramNode' }
 
-{ #category : #'*RBFormatter' }
+{ #category : '*RBFormatter' }
 RBProgramNode >> formatterStatementComments [
 	| statementComments |
 	statementComments := OrderedCollection withAll: self comments.

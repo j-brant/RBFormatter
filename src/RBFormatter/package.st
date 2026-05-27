@@ -1,1 +1,1 @@
-Package { #name : #RBFormatter }
+Package { #name : 'RBFormatter' }

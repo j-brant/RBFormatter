@@ -1,6 +1,6 @@
-Extension { #name : #RBBlockNode }
+Extension { #name : 'RBBlockNode' }
 
-{ #category : #'*RBFormatter' }
+{ #category : '*RBFormatter' }
 RBBlockNode >> formatterStatementComments [
 	^ #()
 ]

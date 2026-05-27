@@ -1,6 +1,6 @@
-Extension { #name : #RBCascadeNode }
+Extension { #name : 'RBCascadeNode' }
 
-{ #category : #'*RBFormatter' }
+{ #category : '*RBFormatter' }
 RBCascadeNode >> formatterStatementComments [
 	| statementComments |
 	statementComments := OrderedCollection withAll: self comments.
