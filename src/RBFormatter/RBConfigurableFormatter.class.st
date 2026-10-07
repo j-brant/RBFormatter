@@ -1,6 +1,6 @@
 Class {
 	#name : 'RBConfigurableFormatter',
-	#superclass : 'RBProgramNodeVisitor',
+	#superclass : 'OCProgramNodeVisitor',
 	#instVars : [
 		'codeStream',
 		'indent',

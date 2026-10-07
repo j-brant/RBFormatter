@@ -1,7 +1,7 @@
-Extension { #name : 'RBCascadeNode' }
+Extension { #name : 'OCCascadeNode' }
 
 { #category : '*RBFormatter' }
-RBCascadeNode >> formatterStatementComments [
+OCCascadeNode >> formatterStatementComments [
 	| statementComments |
 	statementComments := OrderedCollection withAll: self comments.
 	statementComments addAll: messages first receiver formatterStatementComments.

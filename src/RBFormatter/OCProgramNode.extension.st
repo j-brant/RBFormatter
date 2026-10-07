@@ -1,7 +1,7 @@
-Extension { #name : 'RBProgramNode' }
+Extension { #name : 'OCProgramNode' }
 
 { #category : '*RBFormatter' }
-RBProgramNode >> formatterStatementComments [
+OCProgramNode >> formatterStatementComments [
 	| statementComments |
 	statementComments := OrderedCollection withAll: self comments.
 	self children do: [ :each | statementComments addAll: each formatterStatementComments ].
